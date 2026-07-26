@@ -7,14 +7,9 @@
 
 .navbar .logo{
     width: max(10%,80px);
-    margin-left: 10px; 
+    
 }
 
 .profile_image{
     width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-    cursor: pointer;
-    border: 2px solid #f2f2f2;
 }
