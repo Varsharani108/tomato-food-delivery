@@ -6,49 +6,111 @@ export const StoreContext = createContext(null);
 const StoreContextProvider = (props) => {
 
     const [cartItems, setCartItems] = useState({});
-
-    const url = "http://localhost:5000";
-
+    const [food_list, setFoodList] = useState([]);
     const [token, setToken] = useState("");
 
-    const [food_list, setFoodList] = useState([]);
+    const url = "http://localhost:5000";
 
 
     // ================= ADD TO CART =================
 
-    const addToCart = (itemId) => {
+    const addToCart = async (itemId) => {
 
+        // Update frontend cart
         if (!cartItems[itemId]) {
 
-            setCartItems((prevCartItems) => ({
-                ...prevCartItems,
-                [itemId]: 1,
+            setCartItems((prev) => ({
+                ...prev,
+                [itemId]: 1
             }));
 
         } else {
 
             setCartItems((prev) => ({
                 ...prev,
-                [itemId]: prev[itemId] + 1,
+                [itemId]: prev[itemId] + 1
             }));
 
+        }
+
+        // Update database
+        if (token) {
+
+            try {
+
+                const response = await axios.post(
+                    url + "/api/cart/add",
+                    {
+                        itemId: itemId
+                    },
+                    {
+                        headers: {
+                            token: token
+                        }
+                    }
+                );
+
+                console.log(response.data);
+
+            } catch (error) {
+
+                console.log("Add to cart error:", error);
+
+            }
         }
     };
 
 
     // ================= REMOVE FROM CART =================
 
-    const removeFromCart = (itemId) => {
+    const removeFromCart = async (itemId) => {
 
-        setCartItems((prev) => ({
-            ...prev,
-            [itemId]: prev[itemId] - 1
-        }));
+        // Update frontend cart
+        setCartItems((prev) => {
 
+            const updatedCart = {
+                ...prev,
+                [itemId]: prev[itemId] - 1
+            };
+
+            // Remove item when quantity becomes 0
+            if (updatedCart[itemId] <= 0) {
+                delete updatedCart[itemId];
+            }
+
+            return updatedCart;
+        });
+
+
+        // Update database
+        if (token) {
+
+            try {
+
+                const response = await axios.post(
+                    url + "/api/cart/remove",
+                    {
+                        itemId: itemId
+                    },
+                    {
+                        headers: {
+                            token: token
+                        }
+                    }
+                );
+
+                console.log(response.data);
+
+            } catch (error) {
+
+                console.log("Remove from cart error:", error);
+
+            }
+        }
     };
 
 
-    // ================= TOTAL CART AMOUNT =================
+    // ================= GET TOTAL CART AMOUNT =================
 
     const getTotalCartAmount = () => {
 
@@ -58,14 +120,16 @@ const StoreContextProvider = (props) => {
 
             if (cartItems[item] > 0) {
 
-                let itemInfo = food_list.find(
+                const itemInfo = food_list.find(
                     (product) => product._id === item
                 );
 
                 if (itemInfo) {
-                    totalAmount += itemInfo.price * cartItems[item];
-                }
 
+                    totalAmount +=
+                        itemInfo.price * cartItems[item];
+
+                }
             }
         }
 
@@ -89,13 +153,59 @@ const StoreContextProvider = (props) => {
 
             } else {
 
-                console.log("Error fetching food list");
+                console.log(
+                    "Error fetching food list"
+                );
 
             }
 
         } catch (error) {
 
-            console.log("Error:", error);
+            console.log(
+                "Food list error:",
+                error
+            );
+
+        }
+    };
+
+
+    // ================= LOAD CART DATA =================
+
+    const loadCartData = async (token) => {
+
+        try {
+
+            const response = await axios.post(
+                url + "/api/cart/get",
+                {},
+                {
+                    headers: {
+                        token: token
+                    }
+                }
+            );
+
+            if (response.data.success) {
+
+                setCartItems(
+                    response.data.cartData
+                );
+
+            } else {
+
+                console.log(
+                    response.data.message
+                );
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Load cart error:",
+                error
+            );
 
         }
     };
@@ -105,18 +215,25 @@ const StoreContextProvider = (props) => {
 
     useEffect(() => {
 
-        async function loadData() {
+        const loadData = async () => {
 
+            // Fetch all food from MongoDB
             await fetchFoodList();
 
-            if (localStorage.getItem("token")) {
+            // Get token from localStorage
+            const savedToken =
+                localStorage.getItem("token");
 
-                setToken(
-                    localStorage.getItem("token")
-                );
+            if (savedToken) {
+
+                setToken(savedToken);
+
+                // Get cart from MongoDB
+                await loadCartData(savedToken);
 
             }
-        }
+
+        };
 
         loadData();
 
@@ -127,32 +244,41 @@ const StoreContextProvider = (props) => {
 
     const contextValue = {
 
+        // Food
         food_list,
 
+        // Cart
         cartItems,
         setCartItems,
-
         addToCart,
         removeFromCart,
         getTotalCartAmount,
 
+        // Backend
         url,
 
+        // Authentication
         token,
-        setToken
+        setToken,
+
+        // Load cart
+        loadCartData
 
     };
 
 
     return (
 
-        <StoreContext.Provider value={contextValue}>
+        <StoreContext.Provider
+            value={contextValue}
+        >
 
             {props.children}
 
         </StoreContext.Provider>
 
     );
+
 };
 
 export default StoreContextProvider;
