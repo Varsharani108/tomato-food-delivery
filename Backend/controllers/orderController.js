@@ -2,7 +2,14 @@ import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+let stripe = null;
+
+const getStripe = () => {
+    if (!stripe) {
+        stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    }
+    return stripe;
+};
 
 
 // ================= PLACE ORDER =================
@@ -50,7 +57,7 @@ const placeOrder = async (req, res) => {
         });
 
         await newOrder.save();
-        await userModel.findByIdAndUpdate(res.body.userId,{cartData:{}});
+        await userModel.findByIdAndUpdate(req.body.userId,{cartData:{}});
 
 
         // Stripe Checkout Session
@@ -78,7 +85,7 @@ const placeOrder = async (req, res) => {
             quantity:1
         })
 
-        const session = await stripe.checkout.sessions.create({
+        const session = await getStripe().checkout.sessions.create({
 
             line_items: line_items,
 

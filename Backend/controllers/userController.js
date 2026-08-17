@@ -155,4 +155,36 @@ const loginUser = async (req, res) => {
 };
 
 
-export { registerUser, loginUser };
+// ================= GET USER PROFILE =================
+
+const getUserProfile = async (req, res) => {
+    try {
+        const userId = req.body.userId;
+
+        const user = await userModel.findById(userId);
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        res.json({
+            success: true,
+            name: user.name,
+            email: user.email,
+            userId: user._id
+        });
+
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            message: "Error fetching user profile"
+        });
+    }
+};
+
+
+export { registerUser, loginUser, getUserProfile };

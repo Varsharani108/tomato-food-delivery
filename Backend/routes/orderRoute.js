@@ -4,7 +4,8 @@ import {
     placeOrder,
     userOrders,
     listOrders,
-    updateStatus
+    updateStatus,
+    verifyOrder
 } from "../controllers/orderController.js";
 
 import authMiddleware from "../middleware/auth.js";
@@ -18,6 +19,15 @@ orderRouter.post(
     "/place",
     authMiddleware,
     placeOrder
+);
+
+
+// ================= VERIFY ORDER =================
+
+orderRouter.post(
+    "/verify",
+    authMiddleware,
+    verifyOrder
 );
 
 
