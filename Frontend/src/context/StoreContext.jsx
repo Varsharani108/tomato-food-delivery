@@ -8,6 +8,7 @@ const StoreContextProvider = (props) => {
     const [cartItems, setCartItems] = useState({});
     const [food_list, setFoodList] = useState([]);
     const [token, setToken] = useState("");
+    const [user, setUser] = useState(null);
 
     const url = "http://localhost:5000";
 
@@ -211,6 +212,44 @@ const StoreContextProvider = (props) => {
     };
 
 
+    // ================= LOAD USER DATA =================
+
+    const loadUserData = async (token) => {
+
+        try {
+
+            const response = await axios.get(
+                url + "/api/user/profile",
+                {
+                    headers: {
+                        token: token
+                    }
+                }
+            );
+
+            if (response.data.success) {
+
+                setUser(response.data);
+
+            } else {
+
+                console.log(
+                    response.data.message
+                );
+
+            }
+
+        } catch (error) {
+
+            console.log(
+                "Load user error:",
+                error
+            );
+
+        }
+    };
+
+
     // ================= LOAD DATA =================
 
     useEffect(() => {
@@ -230,6 +269,9 @@ const StoreContextProvider = (props) => {
 
                 // Get cart from MongoDB
                 await loadCartData(savedToken);
+
+                // Get user profile from MongoDB
+                await loadUserData(savedToken);
 
             }
 
@@ -260,9 +302,11 @@ const StoreContextProvider = (props) => {
         // Authentication
         token,
         setToken,
+        user,
 
         // Load cart
-        loadCartData
+        loadCartData,
+        loadUserData
 
     };
 
