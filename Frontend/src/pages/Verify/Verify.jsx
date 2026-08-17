@@ -27,9 +27,9 @@ const Verify = () => {
         );
 
         if (response.data.success) {
-          // Payment successful - redirect after 3 seconds
+          // Payment successful - redirect to orders page after 3 seconds
           setTimeout(() => {
-            navigate('/');
+            navigate('/myorders');
           }, 3000);
         } else {
           // Payment failed
